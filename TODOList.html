@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+    }
+    input[type="text"] {
+      width: 70%;
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      padding: 5
+      px;
+      margin-left: 5px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .task-text {
+      flex-grow: 1;
+      text-align: left;
+    }
+    li.completed .task-text {
+      text-decoration: line-through;
+      color: gray;
+    }
+    .btn-group button {
+      margin-left: 5px;
+    }
+    .stats {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>My To-Do List</h2>
+    <input type="text" id="taskInput" placeholder="Enter new task">
+    <button onclick="addTask()">Add Task</button>
+    <button onclick="clearAll()">Clear All</button>
+    <ul id="taskList"></ul>
+    <div class="stats">
+      Total: <span id="totalCount">0</span> | 
+      Completed: <span id="completedCount">0</span> | 
+      Pending: <span id="pendingCount">0</span>
+    </div>
+  </div>
+
+  <script>
+    const taskList = document.getElementById("taskList");
+    const totalCount = document.getElementById("totalCount");
+    const completedCount = document.getElementById("completedCount");
+    const pendingCount = document.getElementById("pendingCount");
+
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+    function updateLocalStorage() {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+    function updateCounts() {
+      totalCount.textContent = tasks.length;
+      completedCount.textContent = tasks.filter(task => task.completed).length;
+      pendingCount.textContent = tasks.filter(task => !task.completed).length;
+    }
+
+    function renderTasks() {
+      taskList.innerHTML = "";
+      tasks.slice().reverse().forEach((task) => {
+        const li = document.createElement("li");
+        if (task.completed) li.classList.add("completed");
+
+        const span = document.createElement("span");
+        span.className = "task-text";
+        span.textContent = task.text;
+
+        const btnGroup = document.createElement("div");
+        btnGroup.className = "btn-group";
+
+        const completeBtn = document.createElement("button");
+        completeBtn.textContent = task.completed ? "Completed" : "Complete";
+        completeBtn.onclick = () => {
+          task.completed = !task.completed;
+          updateLocalStorage();
+          renderTasks();
+        };
+
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => {
+          const newText = prompt("Edit task:", task.text);
+          if (newText !== null && newText.trim() !== "") {
+            task.text = newText.trim();
+            updateLocalStorage();
+            renderTasks();
+          }
+        };
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.onclick = () => {
+          tasks.splice(tasks.indexOf(task), 1);
+          updateLocalStorage();
+          renderTasks();
+        };
+
+        btnGroup.appendChild(completeBtn);
+        btnGroup.appendChild(editBtn);
+        btnGroup.appendChild(deleteBtn);
+
+        li.appendChild(span);
+        li.appendChild(btnGroup);
+        taskList.appendChild(li);
+      });
+      updateCounts();
+    }
+
+    function addTask() {
+      const taskInput = document.getElementById("taskInput");
+      const taskText = taskInput.value.trim();
+      if (taskText === "") return;
+
+      tasks.push({ text: taskText, completed: false });
+      updateLocalStorage();
+      renderTasks();
+      taskInput.value = "";
+    }
+
+    function clearAll() {
+      if (confirm("Are you sure you want to clear all tasks?")) {
+        tasks = [];
+        updateLocalStorage();
+        renderTasks();
+      }
+    }
+
+    renderTasks();
+  </script>
+</body>
+</html>
